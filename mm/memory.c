@@ -89,7 +89,7 @@
 #include "pgalloc-track.h"
 #include "internal.h"
 #include "swap.h"
-#include <linux/melokc.h>
+#include <linux/melokc_log.h>
 
 #if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
 #warning Unfortunate NUMA and NUMA Balancing config, growing page-frame for last_cpupid.
@@ -3854,7 +3854,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 	pte_t pte;
 
 	if (likely(!unshare)) {
-		melokc_pr("no need to create a private one\n");
+		melokc_debug("no need to create a private one\n");
 		if (userfaultfd_pte_wp(vma, ptep_get(vmf->pte))) {
 			if (!userfaultfd_wp_async(vma)) {
 				pte_unmap_unlock(vmf->pte, vmf->ptl);
@@ -3925,7 +3925,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 			pte_unmap_unlock(vmf->pte, vmf->ptl);
 			return 0;
 		}
-		melokc_pr("folio has already been cow,we can reuse it now\n");
+		melokc_debug("folio has already been cow,we can reuse it now\n");
 		wp_page_reuse(vmf, folio);
 		return 0;
 	}
@@ -3940,7 +3940,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 	if (folio && folio_test_ksm(folio))
 		count_vm_event(COW_KSM);
 #endif
-	melokc_pr("we should do cow here\n");
+	melokc_debug("we should do cow here\n");
 	return wp_page_copy(vmf);
 }
 
@@ -6023,7 +6023,7 @@ static vm_fault_t handle_pte_fault(struct vm_fault *vmf)
 	}
 	if (vmf->flags & (FAULT_FLAG_WRITE|FAULT_FLAG_UNSHARE)) {
 		if (!pte_write(entry)) {
-			melokc_pr("do wp page\n");
+			melokc_debug("do wp page\n");
 			return do_wp_page(vmf);
 		}
 		else if (likely(vmf->flags & FAULT_FLAG_WRITE))
