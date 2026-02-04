@@ -89,6 +89,7 @@
 #include "pgalloc-track.h"
 #include "internal.h"
 #include "swap.h"
+#include <linux/melokc.h>
 
 #if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
 #warning Unfortunate NUMA and NUMA Balancing config, growing page-frame for last_cpupid.
@@ -3853,6 +3854,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 	pte_t pte;
 
 	if (likely(!unshare)) {
+		melokc_pr("no need to create a private one\n");
 		if (userfaultfd_pte_wp(vma, ptep_get(vmf->pte))) {
 			if (!userfaultfd_wp_async(vma)) {
 				pte_unmap_unlock(vmf->pte, vmf->ptl);
@@ -3893,6 +3895,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 	 * FAULT_FLAG_WRITE set at this point.
 	 */
 	if (vma->vm_flags & (VM_SHARED | VM_MAYSHARE)) {
+		melokc_debug("we can share this folio\n");
 		/*
 		 * VM_MIXEDMAP !pfn_valid() case, or VM_SOFTDIRTY clear on a
 		 * VM_PFNMAP VMA. FS DAX also wants ops->pfn_mkwrite called.
@@ -3922,6 +3925,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 			pte_unmap_unlock(vmf->pte, vmf->ptl);
 			return 0;
 		}
+		melokc_pr("folio has already been cow,we can reuse it now\n");
 		wp_page_reuse(vmf, folio);
 		return 0;
 	}
@@ -3936,6 +3940,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 	if (folio && folio_test_ksm(folio))
 		count_vm_event(COW_KSM);
 #endif
+	melokc_pr("we should do cow here\n");
 	return wp_page_copy(vmf);
 }
 
@@ -4154,10 +4159,14 @@ static vm_fault_t pte_marker_clear(struct vm_fault *vmf)
 
 static vm_fault_t do_pte_missing(struct vm_fault *vmf)
 {
-	if (vma_is_anonymous(vmf->vma))
+	if (vma_is_anonymous(vmf->vma)) {
+		melokc_debug("vma is unshared anon\n");
 		return do_anonymous_page(vmf);
-	else
+	}
+	else {
+		melokc_debug("vma is file or shmem\n");
 		return do_fault(vmf);
+	}
 }
 
 /*
@@ -5993,11 +6002,15 @@ static vm_fault_t handle_pte_fault(struct vm_fault *vmf)
 		}
 	}
 
-	if (!vmf->pte)
+	if (!vmf->pte) {
+		melokc_debug("pte missing\n");
 		return do_pte_missing(vmf);
+	}
 
-	if (!pte_present(vmf->orig_pte))
+	if (!pte_present(vmf->orig_pte)) {
+		melokc_debug("do swap page\n");
 		return do_swap_page(vmf);
+	}
 
 	if (pte_protnone(vmf->orig_pte) && vma_is_accessible(vmf->vma))
 		return do_numa_page(vmf);
@@ -6009,8 +6022,10 @@ static vm_fault_t handle_pte_fault(struct vm_fault *vmf)
 		goto unlock;
 	}
 	if (vmf->flags & (FAULT_FLAG_WRITE|FAULT_FLAG_UNSHARE)) {
-		if (!pte_write(entry))
+		if (!pte_write(entry)) {
+			melokc_pr("do wp page\n");
 			return do_wp_page(vmf);
+		}
 		else if (likely(vmf->flags & FAULT_FLAG_WRITE))
 			entry = pte_mkdirty(entry);
 	}
@@ -6280,6 +6295,8 @@ vm_fault_t handle_mm_fault(struct vm_area_struct *vma, unsigned long address,
 	bool is_droppable;
 
 	__set_current_state(TASK_RUNNING);
+
+	melokc_debug("Task is running\n");
 
 	ret = sanitize_fault_flags(vma, &flags);
 	if (ret)
