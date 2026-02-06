@@ -121,13 +121,13 @@ Setting the ramoops parameters can be done in several different manners:
   }
 
  D. Using a region of memory reserved via ``reserve_mem`` command line
-    parameter. The address and size will be defined by the ``reserve_mem``
-    parameter. Note, that ``reserve_mem`` may not always allocate memory
-    in the same location, and cannot be relied upon. Testing will need
-    to be done, and it may not work on every machine, nor every kernel.
-    Consider this a "best effort" approach. The ``reserve_mem`` option
-    takes a size, alignment and name as arguments. The name is used
-    to map the memory to a label that can be retrieved by ramoops.
+ parameter. The address and size will be defined by the ``reserve_mem``
+ parameter. Note, that ``reserve_mem`` may not always allocate memory
+ in the same location, and cannot be relied upon. Testing will need
+ to be done, and it may not work on every machine, nor every kernel.
+ Consider this a "best effort" approach. The ``reserve_mem`` option
+ takes a size, alignment and name as arguments. The name is used
+ to map the memory to a label that can be retrieved by ramoops::
 
 	reserve_mem=2M:4096:oops  ramoops.mem_name=oops
 
