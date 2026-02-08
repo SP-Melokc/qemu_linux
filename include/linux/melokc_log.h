@@ -7,10 +7,10 @@
 
 #define melokc_debug(fmt, ...) \
 	if (strstr(current->comm, "TEST")) \
-		pr_err("Melokc:[%s][%s][%d]: " fmt, current->comm, current->pid,  __func__, ##__VA_ARGS__)
+		pr_err("Melokc:[%s][%d][%s]: " fmt, current->comm, current->pid,  __func__, ##__VA_ARGS__)
 
 #define melokc_pr(fmt, ...) \
-		pr_err("Melokc:[%s][%s][%d]: " fmt, current->comm, current->pid, __func__, ##__VA_ARGS__)
+		pr_err("Melokc:[%s][%d][%s]: " fmt, current->comm, current->pid, __func__, ##__VA_ARGS__)
 
 #endif
 
