@@ -128,6 +128,7 @@
 #include <linux/blk-cgroup.h>
 #include <linux/fadvise.h>
 #include <linux/sched/mm.h>
+#include <linux/melokc_log.h>
 
 #include "internal.h"
 
@@ -640,6 +641,11 @@ void page_cache_async_ra(struct readahead_control *ractl,
 	 */
 	if (folio_test_writeback(folio))
 		return;
+	
+	if (folio_test_locked(folio))
+		melokc_pr("folio is locked\n");
+	else
+		melokc_pr("folio is not locked\n");		
 
 	folio_clear_readahead(folio);
 
@@ -684,7 +690,19 @@ void page_cache_async_ra(struct readahead_control *ractl,
 	ra->async_size = ra->size;
 readit:
 	ractl->_index = ra->start;
+
+        if (folio_test_locked(folio))
+                melokc_pr("folio is locked2\n");
+        else
+                melokc_pr("folio is not locked2\n");
+	
 	page_cache_ra_order(ractl, ra, order);
+
+        if (folio_test_locked(folio))
+                melokc_pr("folio is locked3\n");
+        else
+                melokc_pr("folio is not locked3\n");
+
 }
 EXPORT_SYMBOL_GPL(page_cache_async_ra);
 

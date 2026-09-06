@@ -6,6 +6,7 @@ EXTRAVERSION =
 NAME = Baby Opossum Posse
 ARCH = arm64
 CROSS_COMPILE = aarch64-linux-gnu-
+CFLAGS_filemap.o := -O0
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"

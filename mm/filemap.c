@@ -62,6 +62,7 @@
 
 #include <asm/mman.h>
 
+#include <linux/melokc_log.h>
 #include "swap.h"
 
 /*
@@ -3286,6 +3287,8 @@ static struct file *do_async_mmap_readahead(struct vm_fault *vmf,
 		WRITE_ONCE(ra->mmap_miss, --mmap_miss);
 
 	if (folio_test_readahead(folio)) {
+		if (folio_test_locked(folio))
+			melokc_pr("folio is locked\n");
 		fpin = maybe_unlock_mmap_for_io(vmf, fpin);
 		page_cache_async_ra(&ractl, folio, ra->ra_pages);
 	}
@@ -3380,6 +3383,8 @@ vm_fault_t filemap_fault(struct vm_fault *vmf)
 	 * Do we have something in the page cache already?
 	 */
 	folio = filemap_get_folio(mapping, index);
+	if (folio_test_locked(folio))
+		melokc_pr("folio is locked\n");
 	if (likely(!IS_ERR(folio))) {
 		/*
 		 * We found the page, so try async readahead before waiting for
